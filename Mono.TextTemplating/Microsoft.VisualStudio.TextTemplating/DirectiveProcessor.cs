@@ -66,7 +66,7 @@ namespace Microsoft.VisualStudio.TextTemplating
 			return null;
 		}
 
-		CompilerErrorCollection IDirectiveProcessor.Errors { get { return errors; } }
+	    public CompilerErrorCollection Errors { get { return errors; } }
 
 		void IDirectiveProcessor.SetProcessingRunIsHostSpecific (bool hostSpecific)
 		{

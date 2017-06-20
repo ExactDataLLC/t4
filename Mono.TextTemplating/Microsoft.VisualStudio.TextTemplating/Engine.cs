@@ -36,7 +36,7 @@ namespace Microsoft.VisualStudio.TextTemplating
 {
 	public class Engine : ITextTemplatingEngine
 	{
-		TemplatingEngine engine = new TemplatingEngine ();
+		protected TemplatingEngine engine = new TemplatingEngine ();
 		
 		public Engine ()
 		{

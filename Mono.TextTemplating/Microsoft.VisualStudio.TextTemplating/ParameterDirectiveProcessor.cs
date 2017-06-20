@@ -32,13 +32,13 @@ using Mono.TextTemplating;
 
 namespace Microsoft.VisualStudio.TextTemplating
 {
-	public sealed class ParameterDirectiveProcessor : DirectiveProcessor, IRecognizeHostSpecific
+	public class ParameterDirectiveProcessor : DirectiveProcessor, IRecognizeHostSpecific
 	{
 		CodeDomProvider provider;
 		
 		bool hostSpecific;
 		readonly List<CodeStatement> postStatements = new List<CodeStatement> ();
-		readonly List<CodeTypeMember> members = new List<CodeTypeMember> ();
+		protected readonly List<CodeTypeMember> members = new List<CodeTypeMember> ();
 		
 		public override void StartProcessingRun (CodeDomProvider languageProvider, string templateContents, CompilerErrorCollection errors)
 		{

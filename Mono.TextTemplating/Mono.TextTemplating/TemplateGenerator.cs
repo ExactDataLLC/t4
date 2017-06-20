@@ -40,20 +40,18 @@ namespace Mono.TextTemplating
 		TemplatingEngine engine;
 		
 		//per-run variables
-		string inputFile, outputFile;
-		Encoding encoding;
-		
-		//host fields
-		readonly CompilerErrorCollection errors = new CompilerErrorCollection ();
-		readonly List<string> refs = new List<string> ();
-		readonly List<string> imports = new List<string> ();
-		readonly List<string> includePaths = new List<string> ();
-		readonly List<string> referencePaths = new List<string> ();
+		string outputFile;
+		protected Encoding encoding;
+
+        //host fields
+	    protected readonly CompilerErrorCollection errors = new CompilerErrorCollection ();
+		protected readonly List<string> refs = new List<string> ();
+	    protected readonly List<string> imports = new List<string> ();
+	    protected readonly List<string> includePaths = new List<string> ();
+	    protected readonly List<string> referencePaths = new List<string> ();
 		
 		//host properties for consumers to access
 		public CompilerErrorCollection Errors { get { return errors; } }
-		public List<string> Refs { get { return refs; } }
-		public List<string> Imports { get { return imports; } }
 		public List<string> IncludePaths { get { return includePaths; } }
 		public List<string> ReferencePaths { get { return referencePaths; } }
 		public string OutputFile { get { return outputFile; } }
@@ -61,9 +59,9 @@ namespace Mono.TextTemplating
 		
 		public TemplateGenerator ()
 		{
-			Refs.Add (typeof (TextTransformation).Assembly.Location);
-			Refs.Add (typeof(Uri).Assembly.Location);
-			Imports.Add ("System");
+			StandardAssemblyReferences.Add (typeof (TextTransformation).Assembly.Location);
+		    StandardAssemblyReferences.Add (typeof(Uri).Assembly.Location);
+			StandardImports.Add ("System");
 		}
 		
 		public CompiledTemplate CompileTemplate (string content)
@@ -120,7 +118,7 @@ namespace Mono.TextTemplating
 			encoding = Encoding.UTF8;
 			
 			outputFile = outputFileName;
-			inputFile = inputFileName;
+			TemplateFile = inputFileName;
 			outputContent = Engine.ProcessTemplate (inputContent, this);
 			outputFileName = outputFile;
 			
@@ -166,7 +164,7 @@ namespace Mono.TextTemplating
 			errors.Clear ();
 			encoding = Encoding.UTF8;
 			
-			inputFile = inputFileName;
+			TemplateFile = inputFileName;
 			outputContent = Engine.PreprocessTemplate (inputContent, this, className, classNamespace, out language, out references);
 			
 			return !errors.HasErrors;
@@ -196,7 +194,7 @@ namespace Mono.TextTemplating
 			return null;
 		}
 		
-		protected virtual string ResolveAssemblyReference (string assemblyReference)
+		public virtual string ResolveAssemblyReference (string assemblyReference)
 		{
 			if (System.IO.Path.IsPathRooted (assemblyReference))
  				return assemblyReference;
@@ -215,7 +213,7 @@ namespace Mono.TextTemplating
 			return assemblyReference;
 		}
 		
-		protected virtual string ResolveParameterValue (string directiveId, string processorName, string parameterName)
+		public virtual string ResolveParameterValue (string directiveId, string processorName, string parameterName)
 		{
 			var key = new ParameterKey (processorName, directiveId, parameterName);
 			string value;
@@ -226,7 +224,7 @@ namespace Mono.TextTemplating
 			return null;
 		}
 		
-		protected virtual Type ResolveDirectiveProcessor (string processorName)
+		public virtual Type ResolveDirectiveProcessor (string processorName)
 		{
 			KeyValuePair<string,string> value;
 			if (!directiveProcessors.TryGetValue (processorName, out value))
@@ -238,12 +236,12 @@ namespace Mono.TextTemplating
 			return asm.GetType (value.Key, true);
 		}
 		
-		protected virtual string ResolvePath (string path)
+		public virtual string ResolvePath (string path)
 		{
 			path = Environment.ExpandEnvironmentVariables (path);
 			if (Path.IsPathRooted (path))
 				return path;
-			var dir = Path.GetDirectoryName (inputFile);
+			var dir = Path.GetDirectoryName (TemplateFile);
 			var test = Path.Combine (dir, path);
 			if (File.Exists (test) || Directory.Exists (test))
 				return test;
@@ -329,7 +327,7 @@ namespace Mono.TextTemplating
 			return !string.IsNullOrEmpty (name);
 		}
 		
-		protected virtual bool LoadIncludeText (string requestFileName, out string content, out string location)
+		public virtual bool LoadIncludeText (string requestFileName, out string content, out string location)
 		{
 			content = "";
 			location = ResolvePath (requestFileName);
@@ -356,39 +354,12 @@ namespace Mono.TextTemplating
 			return false;
 		}
 		
-		#region Explicit ITextTemplatingEngineHost implementation
-		
-		bool ITextTemplatingEngineHost.LoadIncludeText (string requestFileName, out string content, out string location)
-		{
-			return LoadIncludeText (requestFileName, out content, out location);
-		}
-		
-		void ITextTemplatingEngineHost.LogErrors (CompilerErrorCollection errors)
+		public virtual void LogErrors (CompilerErrorCollection errors)
 		{
 			this.errors.AddRange (errors);
 		}
-		
-		string ITextTemplatingEngineHost.ResolveAssemblyReference (string assemblyReference)
-		{
-			return ResolveAssemblyReference (assemblyReference);
-		}
-		
-		string ITextTemplatingEngineHost.ResolveParameterValue (string directiveId, string processorName, string parameterName)
-		{
-			return ResolveParameterValue (directiveId, processorName, parameterName);
-		}
-		
-		Type ITextTemplatingEngineHost.ResolveDirectiveProcessor (string processorName)
-		{
-			return ResolveDirectiveProcessor (processorName);
-		}
-		
-		string ITextTemplatingEngineHost.ResolvePath (string path)
-		{
-			return ResolvePath (path);
-		}
-		
-		void ITextTemplatingEngineHost.SetFileExtension (string extension)
+				
+		public virtual void SetFileExtension (string extension)
 		{
 			extension = extension.TrimStart ('.');
 			if (Path.HasExtension (outputFile)) {
@@ -398,26 +369,22 @@ namespace Mono.TextTemplating
 			}
 		}
 		
-		void ITextTemplatingEngineHost.SetOutputEncoding (Encoding encoding, bool fromOutputDirective)
+		public virtual void SetOutputEncoding (Encoding encoding, bool fromOutputDirective)
 		{
 			this.encoding = encoding;
 		}
 		
-		IList<string> ITextTemplatingEngineHost.StandardAssemblyReferences {
+		public IList<string> StandardAssemblyReferences {
 			get { return refs; }
 		}
 		
-		IList<string> ITextTemplatingEngineHost.StandardImports {
+		public IList<string> StandardImports {
 			get { return imports; }
 		}
 		
-		string ITextTemplatingEngineHost.TemplateFile {
-			get { return inputFile; }
-		}
-		
-		#endregion
-		
-		struct ParameterKey : IEquatable<ParameterKey>
+		public string TemplateFile { get; set; }
+
+	    struct ParameterKey : IEquatable<ParameterKey>
 		{
 			public ParameterKey (string processorName, string directiveName, string parameterName)
 			{

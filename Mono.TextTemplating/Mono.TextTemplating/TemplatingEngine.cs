@@ -494,10 +494,6 @@ namespace Mono.TextTemplating
 			if (!settings.IncludePreprocessingHelpers)
 				transformMeth.Attributes |= MemberAttributes.Override;
 			
-			transformMeth.Statements.Add (new CodeAssignStatement (
-				new CodePropertyReferenceExpression (new CodeThisReferenceExpression (), "GenerationEnvironment"),
-				new CodePrimitiveExpression (null)));
-			
 			CodeExpression toStringHelper;
 			if (settings.IsPreprocessed) {
 				toStringHelper = new CodePropertyReferenceExpression (new CodeThisReferenceExpression (), "ToStringHelper");
@@ -635,8 +631,8 @@ namespace Mono.TextTemplating
 			if (!settings.IncludePreprocessingHelpers)
 				initializeMeth.Attributes |= MemberAttributes.Override;
 
-			//if preprocessed, pass the extension and encoding to the host
-			if (settings.IsPreprocessed && settings.HostSpecific) {
+            //if preprocessed, pass the extension and encoding to the host
+            if (settings.IsPreprocessed && settings.HostSpecific) {
 				var hostProp = new CodePropertyReferenceExpression (new CodeThisReferenceExpression (), "Host");
 				var statements = new List<CodeStatement> ();
 
@@ -672,9 +668,15 @@ namespace Mono.TextTemplating
 					));
 				}
 			}
-			
-			//pre-init code from processors
-			foreach (var processor in settings.DirectiveProcessors.Values) {
+
+		    // Clear out the GenerationEnvironment variable
+		    initializeMeth.Statements.Add(
+		        new CodeMethodInvokeExpression(
+		            new CodePropertyReferenceExpression(new CodeThisReferenceExpression(), "GenerationEnvironment"),
+		            "Clear"));
+
+            //pre-init code from processors
+            foreach (var processor in settings.DirectiveProcessors.Values) {
 				string code = processor.GetPreInitializationCodeForProcessingRun ();
 				if (code != null)
 					initializeMeth.Statements.Add (new CodeSnippetStatement (code));

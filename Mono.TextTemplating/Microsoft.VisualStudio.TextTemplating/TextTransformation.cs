@@ -126,7 +126,7 @@ namespace Microsoft.VisualStudio.TextTemplating
 			}
 		}
 		
-		public void Write (string textToAppend)
+		public virtual void Write (string textToAppend)
 		{
 			if (string.IsNullOrEmpty (textToAppend))
 				return;
@@ -174,19 +174,19 @@ namespace Microsoft.VisualStudio.TextTemplating
 				GenerationEnvironment.Append (textToAppend);
 		}
 		
-		public void Write (string format, params object[] args)
+		public virtual void Write (string format, params object[] args)
 		{
 			Write (string.Format (format, args));
 		}
 		
-		public void WriteLine (string textToAppend)
+		public virtual void WriteLine (string textToAppend)
 		{
 			Write (textToAppend);
 			GenerationEnvironment.AppendLine ();
 			endsWithNewline = true;
 		}
 		
-		public void WriteLine (string format, params object[] args)
+		public virtual void WriteLine (string format, params object[] args)
 		{
 			WriteLine (string.Format (format, args));
 		}
